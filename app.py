@@ -1,7 +1,9 @@
+import os
 from flask import Flask, render_template, redirect, url_for, session, request
 
 app = Flask(__name__)
-app.secret_key = 'yatsu_rally_2026_secret_key'
+# 🔑 Renderでもスマホの記憶（セッション）が絶対に消えないようにする設定
+app.secret_key = os.environ.get("SECRET_KEY", "yatsu_rally_2026_secret_key")
 
 # 5つのスタンプの設定
 STAMPS = {
@@ -17,10 +19,19 @@ def index():
     if 'my_stamps' not in session:
         session['my_stamps'] = []
     
-    just_got = request.args.get('just_got')
-    just_got_name = STAMPS[just_got]['name'] if just_got in STAMPS else None
     my_stamps = session['my_stamps']
+    just_got_name = None
     
+    # 🌟【ここを修正！】URLに ?just_got=〇〇 がついていたら、その場でスタンプを記憶に追加する
+    just_got = request.args.get('just_got')
+    if just_got in STAMPS:
+        if just_got not in my_stamps:
+            my_stamps.append(just_got)
+            session['my_stamps'] = my_stamps
+            session.modified = True  # 確実にスマホに記憶させる
+        just_got_name = STAMPS[just_got]['name']
+    
+    # 条件判定
     has_hotaru = any(s in my_stamps for s in ["hori", "tenjin", "oshidori"])
     has_hi = "hi" in my_stamps
     has_walk = "walk" in my_stamps
@@ -28,7 +39,6 @@ def index():
     clear_normal = has_hotaru and has_hi
     clear_special = has_hotaru and has_hi and has_walk
 
-    # ➔ ここで「stamps=STAMPS」としてHTMLにデータを送っています！
     return render_template('index.html', 
                            stamps=STAMPS, 
                            my_stamps=my_stamps, 
@@ -36,6 +46,7 @@ def index():
                            clear_normal=clear_normal,
                            clear_special=clear_special)
 
+# 念のため、これまでのスタンプ経由URLが叩かれても動くように残しておきます
 @app.route('/stamp/<stamp_id>')
 def get_stamp(stamp_id):
     if 'my_stamps' not in session:
@@ -47,9 +58,8 @@ def get_stamp(stamp_id):
             my_stamps.append(stamp_id)
             session['my_stamps'] = my_stamps
             session.modified = True
-            return redirect(url_for('index', just_got=stamp_id))
             
-    return redirect(url_for('index'))
+    return redirect(url_for('index', just_got=stamp_id))
 
 @app.route('/reset')
 def reset():
