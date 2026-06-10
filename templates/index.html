@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>谷津スタンプラリー</title>
+    <style>
+        body { 
+            font-family: 'Helvetica Neue', Arial, sans-serif; 
+            text-align: center; 
+            margin: 0;
+            padding: 0;
+            /* 画像を背景に設定 */
+            background-image: url('/static/bg.png'); 
+            background-size: contain;       /* 横幅ぴったりに合わせる */
+            background-repeat: no-repeat;   /* 画像を繰り返さない */
+            background-position: top center;/* 上に合わせる */
+            background-color: #bee2fa;      /* 画像の下の余白を青空の色で埋める */
+        }
+
+        /* スタンプを置くエリア（上の文字に被らないように、少し上をあける） */
+        .grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 25px; 
+            padding: 20px; 
+            max-width: 400px;
+            margin: 0 auto;
+            padding-top: 260px; /* 👈 ここで画像内の文字の下にスタンプが来るように調整しています */
+        }
+
+        /* まだ押されていないスタンプ枠 */
+        .stamp { 
+            border: 3px dashed #95a5a6; 
+            border-radius: 50%; 
+            width: 120px; 
+            height: 120px; 
+            line-height: 120px; 
+            margin: auto; 
+            font-size: 16px; 
+            color: #7f8c8d;
+            background: rgba(255, 255, 255, 0.85); /* 少し透ける白 */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* スタンプが押されたとき（💮になる） */
+        .stamp.active { 
+            border-style: solid; 
+            border-color: #2ecc71; 
+            background: #fff; 
+            color: #2ecc71; 
+            font-size: 50px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="grid">
+        <div id="yatsu-01" class="stamp">スポット1</div>
+        <div id="yatsu-02" class="stamp">スポット2</div>
+        <div id="yatsu-03" class="stamp">スポット3</div>
+        <div id="yatsu-04" class="stamp">スポット4</div>
+    </div>
+
+    <script>
+        const spots = ['yatsu-01', 'yatsu-02', 'yatsu-03', 'yatsu-04'];
+        spots.forEach(id => {
+            if (localStorage.getItem(id) === 'got') {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.classList.add('active');
+                    element.innerText = '💮';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

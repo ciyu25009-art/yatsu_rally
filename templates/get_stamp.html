@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="ja">
+<body>
+    <script>
+        const pointId = "{{ point_id }}";
+        let progress = JSON.parse(localStorage.getItem('yatsu_progress')) || {};
+        progress[pointId] = true;
+        localStorage.setItem('yatsu_progress', JSON.stringify(progress));
+        alert("スタンプをゲット！");
+        window.location.href = "/";
+    </script>
+</body>
+</html>
