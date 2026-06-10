@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>谷津スタンプラリー</title>
+    <style>
+        /* 📱 画面全体をスマホサイズに優しく固定する設定 */
+        html {
+            background-color: #bce2f2; /* PCで開いた時の左右の余白を埋める青色 */
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', sans-serif;
+            /* 👇 背景画像のサイズ比率を維持し、上部のタイトルが絶対に見切れないようにしました */
+            background-image: url("{{ url_for('static', filename='bg.png') }}");
+            background-size: 100% auto; 
+            background-position: top center;
+            background-repeat: no-repeat;
+            margin: 0 auto; 
+            padding: 20px;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            max-width: 500px; 
+            width: 100%;
+            box-sizing: border-box;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05); 
+            background-color: #bce2f2; /* 下にスクロールしても切れ目が出ないように同じ青色で埋めます */
+        }
+
+        /* 📐 背景のタイトルロゴを絶対に踏まないための最適なスペース */
+        .header-spacer {
+            height: 145px; /* タイトル看板が綺麗に収まるジャストサイズに微調整 */
+            width: 100%;
+        }
+
+        /* 🔔 スタンプゲット通知 */
+        .alert-box {
+            background: #fff200;
+            color: #000;
+            padding: 12px 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* 各イベントごとの独立したカード枠（すべて同じサイズに統一） */
+        .stamp-section {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.45);
+            padding: 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(3px);
+            margin-bottom: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            box-sizing: border-box;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+        }
+
+        /* 見出しラベル */
+        .section-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #ffffff;
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .title-hotaru { background: #ff7f50; } 
+        .title-yatsu { background: #2ed573; }   
+        .title-walk { background: #1e3799; }    
+
+        .stamp-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .stamp-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 30%;
+            min-width: 100px;
+        }
+
+        /* 🏷️ ホタル専用の白い名前枠 */
+        .stamp-name {
+            background-color: white;
+            color: #333;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.06);
+            width: 90%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ⭕ ホタル用のスタンプサイズ (標準 100px) */
+        .stamp-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 3px dashed #a4b0be;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        /* 谷津の日・ウォーク用の大きなスタンプサイズ（周りの外枠はホタルと同じで中身だけ巨大化） */
+        .stamp-row-large .stamp-circle {
+            width: 130px;
+            height: 130px;
+            border: 4px dashed #a4b0be;
+        }
+
+        /* 獲得したときの緑枠 */
+        .stamp-circle.got {
+            background-color: #ffffff;
+            border: 3px solid #2ed573;
+            box-shadow: 0 0 15px rgba(46, 213, 115, 0.4);
+        }
+        .stamp-row-large .stamp-circle.got {
+            border: 4px solid #2ed573; 
+        }
+
+        .stamp-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        /* イラストの拡大調整 */
+        .stamp-item[data-id="hori"] .stamp-image,
+        .stamp-item[data-id="tenjin"] .stamp-image,
+        .stamp-item[data-id="oshidori"] .stamp-image {
+            transform: scale(1.5);
+        }
+
+        /* 未獲得スタンプのグレーアウト */
+        .stamp-circle.not-got .stamp-image {
+            filter: grayscale(100%) opacity(25%);
+        }
+
+        /* 景品GET条件ボックス */
+        .info-container {
+            background: rgba(255, 253, 232, 0.95);
+            border: 2px solid #f5b041;
+            padding: 18px;
+            border-radius: 20px;
+            width: 100%;
+            box-sizing: border-box;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .info-title {
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #b36200;
+            font-size: 15px; 
+            border-bottom: 2px solid #f5b041;
+            padding-bottom: 4px;
+        }
+
+        .condition-item {
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        /* 条件の白い囲みと緑の文字（共通体裁） */
+        .clear-msg, .normal-msg {
+            font-weight: bold;
+            display: block;
+            background: #ffffff;
+            padding: 6px 10px;
+            border-radius: 8px;
+            margin-top: 4px;
+            box-sizing: border-box;
+        }
+
+        /* 通常・未達成状態の枠と文字色（綺麗な白囲み＋緑文字に統一） */
+        .normal-msg {
+            color: #2ed573;
+            border: 1px solid #2ed573;
+        }
+
+        /* 条件達成した時のアクティブ状態 */
+        .clear-msg {
+            color: #2ed573;
+            border: 2px solid #2ed573;
+            background: #f0fff4;
+            box-shadow: 0 2px 8px rgba(46, 213, 115, 0.2);
+        }
+        
+        /* 最高ランクコンプリート達成時の豪華演出枠 */
+        .clear-msg-premium {
+            color: #e67e22;
+            font-weight: bold;
+            display: block;
+            background: #fff3e0;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 2px dashed #ff9800;
+            margin-top: 4px;
+        }
+
+        .footer-link {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .footer-link a { color: #7f8c8d; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header-spacer"></div>
+
+    {% if just_got_name %}
+        <div class="alert-box">
+            🎉 「{{ just_got_name }}」のスタンプをゲット！
+        </div>
+    {% endif %}
+
+    <div class="stamp-section">
+        <div class="section-title title-hotaru">✨ ホタル観賞イベント</div>
+        <div class="stamp-row">
+            {% for id in ['hori', 'tenjin', 'oshidori'] %}
+            <div class="stamp-item" data-id="{{ id }}">
+                <div class="stamp-name">{{ stamps[id].name }}</div>
+                <div class="stamp-circle {% if id in my_stamps %}got{% else %}not-got{% endif %}">
+                    <img src="{{ url_for('static', filename=stamps[id].img) }}" class="stamp-image">
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="stamp-section">
+        <div class="section-title title-yatsu">💚 谷津の日</div>
+        <div class="stamp-row stamp-row-large">
+            {% set id = 'hi' %}
+            <div class="stamp-item" style="width:100%;">
+                <div class="stamp-circle {% if id in my_stamps %}got{% else %}not-got{% endif %}">
+                    <img src="{{ url_for('static', filename=stamps[id].img) }}" class="stamp-image">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stamp-section">
+        <div class="section-title title-walk">👟 谷津ウォーク2026秋</div>
+        <div class="stamp-row stamp-row-large">
+            {% set id = 'walk' %}
+            <div class="stamp-item" style="width:100%;">
+                <div class="stamp-circle {% if id in my_stamps %}got{% else %}not-got{% endif %}">
+                    <img src="{{ url_for('static', filename=stamps[id].img) }}" class="stamp-image">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-container">
+        <div class="info-title">🎁 【景品GET条件！】</div>
+        
+        <div class="condition-item">
+            ・ホタルイベント(1つ) ＋ 谷津の日 参加<br>
+            {% if clear_normal %}
+                <span class="clear-msg">🌟 条件達成！「ちょっぴり素敵な景品」をゲット！</span>
+            {% else %}
+                <span class="normal-msg">➔ ちょっぴり素敵な景品をプレゼント！</span>
+            {% endif %}
+        </div>
+        
+        <div class="condition-item">
+            ・ホタルイベント(1つ) ＋ 谷津の日 ＋ 谷津ウォーク 参加<br>
+            {% if clear_special %}
+                <span class="clear-msg">🔥 条件達成！「スペシャル景品」をゲット！</span>
+            {% else %}
+                <span class="normal-msg">➔ 特別なスペシャル景品をプレゼント！</span>
+            {% endif %}
+        </div>
+
+        <div class="condition-item">
+            ・ホタル観賞イベント(3つすべて) ＋ 谷津の日 ＋ 谷津ウォーク2026秋 参加<br>
+            {% if clear_special and 'hori' in my_stamps and 'tenjin' in my_stamps and 'oshidori' in my_stamps %}
+                <span class="clear-msg-premium">👑 奇跡のフルコンプリート！「超プレミアム景品」をゲット！</span>
+            {% else %}
+                <span class="normal-msg">🎁 豪華コンプリート景品をプレゼント！</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="footer-link">
+        <a href="{{ url_for('reset') }}">テスト用：リセット</a>
+    </div>
+
+</body>
+</html>
