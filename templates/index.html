@@ -2,73 +2,62 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>谷津スタンプラリー</title>
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', sans-serif;
             background-image: url("{{ url_for('static', filename='bg.png') }}");
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 450px;
-            min-height: 100vh;
-            padding: 20px 15px;
-            box-sizing: border-box;
+            margin: 0;
+            padding: 20px;
+            color: #333;
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
         }
 
-        .tagline {
+        h2 {
+            color: #ff4757;
             font-size: 18px;
+            margin-bottom: 5px;
             font-weight: bold;
-            color: #e74c3c;
-            margin: 10px 0 0 0;
-            text-shadow: 1px 1px 3px white;
             text-align: center;
         }
 
-        .main-title {
+        h1 {
+            color: #1e3799;
             font-size: 32px;
-            font-weight: bold;
-            color: #2980b9;
-            margin: 5px 0 25px 0;
-            text-shadow: 2px 2px 4px white;
+            margin-top: 0;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
             text-align: center;
         }
 
-        /* スタンプを綺麗に整列させるエリア */
-        .stamp-grid {
+        .stamp-board {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 25px 15px;
+            flex-direction: column;
+            gap: 35px;
             width: 100%;
+            max-width: 650px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.25);
+            padding: 30px 20px;
+            border-radius: 30px;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border: 2px dashed rgba(255,255,255,0.5);
             margin-bottom: 30px;
+            box-sizing: border-box;
         }
 
-        /* 蛍イベントの3つを上に並べるためのグループ */
-        .hotaru-group {
+        .hotaru-group, .other-group {
             display: flex;
             justify-content: center;
-            gap: 12px;
-            width: 100%;
-        }
-
-        /* 下段の2つを並べるためのグループ */
-        .other-group {
-            display: flex;
-            justify-content: center;
-            gap: 25px;
+            gap: 15px;
             width: 100%;
         }
 
@@ -76,184 +65,144 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 29%;
-        }
-        .other-group .stamp-item {
-            width: 38%; /* 下段は少しゆったり配置 */
+            width: 32%;
         }
 
-        /* タイトル看板 */
-        .stamp-title {
+        .other-group .stamp-item {
+            width: 40%;
+        }
+
+        /* 名前の白い枠（隙間をキープ） */
+        .stamp-name {
             background-color: white;
-            padding: 5px 6px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: bold;
             color: #333;
-            margin-bottom: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            width: 100%;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
             text-align: center;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
-        /* スタンプの外枠サークル（点線とシャドウ） */
         .stamp-circle {
-            width: 96px;
-            height: 96px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.4);
-            border: 2px dashed #4b6584;
+            background-color: rgba(255, 255, 255, 0.6);
+            border: 3px dashed #a4b0be;
             display: flex;
             justify-content: center;
             align-items: center;
             position: relative;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.05);
             overflow: hidden;
         }
 
-        /* 画像そのものの設定 */
-        .stamp-circle img {
+        .stamp-image {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            /* まだ未獲得ならモノクロ＆薄くする */
-            filter: grayscale(100%) opacity(25%);
-            transition: all 0.5s ease;
+            border-radius: 50%;
+            transition: transform 0.2s;
         }
 
-        /* 【サイズ調整の魔法】蛍の3つの画像は中央を大きく拡大する */
-        .stamp-circle.hotaru-img img {
-            transform: scale(2.3);
+        /* ✨【ここが重要】「hori」「tenjin」「oshidori」のIDを持つアイテムだけ画像を1.45倍に拡大します */
+        .stamp-item[data-id="hori"] .stamp-image,
+        .stamp-item[data-id="tenjin"] .stamp-image,
+        .stamp-item[data-id="oshidori"] .stamp-image {
+            transform: scale(1.45);
         }
 
-        /* 🎉 スタンプが押された（アクティブ）時の演出 */
-        .stamp-circle.active {
-            border: 3px solid #2ecc71;
-            background-color: white;
-            box-shadow: 0 0 15px rgba(46, 204, 113, 0.6);
+        .stamp-circle.got {
+            background-color: #ffffff;
+            border: 3px solid #2ed573;
+            box-shadow: 0 8px 20px rgba(46, 213, 115, 0.4);
         }
 
-        .stamp-circle.active img {
-            /* 押されたら100%鮮やかなカラーにする */
-            filter: grayscale(0%) opacity(100%);
+        .stamp-circle.not-got .stamp-image {
+            filter: grayscale(100%) opacity(30%);
         }
 
-        /* 🎁 商品獲得条件の掲示板 */
-        .info-board {
-            background-color: #f7e6c9;
-            border: 2px solid #eccc68;
+        .alert-box {
+            background: #fff200;
+            color: #000;
+            padding: 15px 20px;
             border-radius: 15px;
-            padding: 15px;
-            width: 100%;
-            box-sizing: border-box;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            font-weight: bold;
+            box-shadow: 0 6px 15px rgba(239, 229, 14, 0.3);
+            text-align: center;
+            max-width: 500px;
         }
 
-        .info-board h3 {
-            margin: 0 0 12px 0;
-            font-size: 16px;
-            color: #7f8c8d;
-            border-bottom: 2px dashed #eccc68;
+        .info-container {
+            background: #fef5e7;
+            border: 2px solid #f5b041;
+            padding: 20px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+        }
+
+        .info-title {
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #b36200;
+            font-size: 15px;
+            border-bottom: 2px solid #f5b041;
             padding-bottom: 5px;
-            color: #5d4037;
         }
 
         .condition-item {
-            font-size: 12px;
-            line-height: 1.6;
-            margin-bottom: 12px;
-            color: #4d3a3a;
-            padding: 10px;
-            border-radius: 10px;
-            background-color: rgba(255,255,255,0.5);
-            transition: all 0.5s ease;
+            margin: 10px 0;
+            font-size: 13px;
+            line-height: 1.5;
         }
-        .condition-item:last-child { margin-bottom: 0; }
 
-        /* ✨ 条件を達成したときにピカピカ光らせる */
-        .achieved {
-            background-color: #fff200 !important;
-            border: 2px solid #fffa00;
+        .clear-msg {
+            color: #2ed573;
             font-weight: bold;
-            color: black;
-            box-shadow: 0 0 10px #fff200;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-
-        /* 🎬 獲得ポップアップアニメーション */
-        .popup-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .popup-content {
             background: white;
-            padding: 25px;
-            border-radius: 20px;
-            text-align: center;
-            width: 80%;
-            max-width: 300px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        @keyframes popIn {
-            from { transform: scale(0.7); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-        .popup-btn {
-            background-color: #2ecc71;
-            color: white; border: none;
-            padding: 10px 25px; border-radius: 20px;
-            font-size: 14px; font-weight: bold; margin-top: 15px;
-            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin-top: 5px;
+            border: 1px solid #2ed573;
+            display: inline-block;
         }
 
-        .reset-link {
+        .footer-link {
             margin-top: 25px;
-            color: #7f8c8d;
-            font-size: 11px;
-            text-decoration: underline;
-            cursor: pointer;
+            font-size: 12px;
+        }
+        .footer-link a {
+            color: #57606f;
+            text-decoration: none;
+            opacity: 0.7;
         }
     </style>
 </head>
 <body>
 
-{% if just_got_name %}
-<div class="popup-overlay" id="popup">
-    <div class="popup-content">
-        <h2 style="color: #2ecc71; margin: 0 0 10px 0; font-size: 20px;">🎉 スタンプ獲得！</h2>
-        <p style="font-size: 14px; color: #333; font-weight: bold; margin: 0;">「{{ just_got_name }}」<br>のスタンプを押しました！</p>
-        <button class="popup-btn" onclick="document.getElementById('popup').style.display='none'">スタンプ帳を見る</button>
-    </div>
-</div>
-{% endif %}
+    <h2>歩いて・集めて・楽しもう！</h2>
+    <h1>谷津スタンプラリー</h1>
 
-<div class="container">
-    <p class="tagline">歩いて・集めて・楽しもう！</p>
-    <h1 class="main-title">谷津スタンプラリー</h1>
+    {% if just_got_name %}
+        <div class="alert-box">
+            🎉 「{{ just_got_name }}」のスタンプをゲットしたよ！
+        </div>
+    {% endif %}
 
-    <div class="stamp-grid">
+    <div class="stamp-board">
         <div class="hotaru-group">
             {% for id in ['hori', 'tenjin', 'oshidori'] %}
-            {% set stamp = stamps[id] %}
-            <div class="stamp-item">
-                <div class="stamp-title">{{ stamp.name }}</div>
-                <div class="stamp-circle hotaru-img {% if id in my_stamps %}active{% endif %}">
-                    <img src="{{ url_for('static', filename=stamp.img) }}">
+            <div class="stamp-item" data-id="{{ id }}">
+                <div class="stamp-name">{{ stamps[id].name }}</div>
+                <div class="stamp-circle {% if id in my_stamps %}got{% else %}not-got{% endif %}">
+                    <img src="{{ url_for('static', filename=stamps[id].img) }}" class="stamp-image" alt="{{ stamps[id].name }}">
                 </div>
             </div>
             {% endfor %}
@@ -261,43 +210,41 @@
 
         <div class="other-group">
             {% for id in ['hi', 'walk'] %}
-            {% set stamp = stamps[id] %}
-            <div class="stamp-item">
-                <div class="stamp-title">{{ stamp.name }}</div>
-                <div class="stamp-circle {% if id in my_stamps %}active{% endif %}">
-                    <img src="{{ url_for('static', filename=stamp.img) }}">
+            <div class="stamp-item" data-id="{{ id }}">
+                <div class="stamp-name">{{ stamps[id].name }}</div>
+                <div class="stamp-circle {% if id in my_stamps %}got{% else %}not-got{% endif %}">
+                    <img src="{{ url_for('static', filename=stamps[id].img) }}" class="stamp-image" alt="{{ stamps[id].name }}">
                 </div>
             </div>
             {% endfor %}
         </div>
     </div>
 
-    <div class="info-board">
-        <h3>【商品獲得条件】</h3>
+    <div class="info-container">
+        <div class="info-title">【商品獲得条件】</div>
         
-        <div class="condition-item {% if clear_normal and not clear_special %}achieved{% endif %}">
-            {% if clear_normal and not clear_special %}
-            ✨【条件達成！】受付にこの画面を見せて「ちょっぴり素敵な商品」をもらおう！
+        <div class="condition-item">
+            ・蛍イベント（1〜3のどれか1つ） ＋ 谷津の日 参加<br>
+            {% if clear_normal %}
+                <span class="clear-msg">🌟 【条件達成！】受付にこの画面を見せて「ちょっぴり素敵な商品」をもらおう！</span>
             {% else %}
-            ・蛍イベント（1〜3のどれか1つ）＋ 谷津の日 参加<br>
-            <span style="color: #e74c3c; font-weight: bold;">➔ ちょっぴり素敵な商品をプレゼント！</span>
+                <span style="color: #7f8c8d;">➔ ちょっぴり素敵な商品をプレゼント！</span>
             {% endif %}
         </div>
         
-        <div class="condition-item {% if clear_special %}achieved{% endif %}">
+        <div class="condition-item">
+            ・蛍イベント（1〜3のどれか1つ） ＋ 谷津の日 ＋ 谷津ウォーク 参加<br>
             {% if clear_special %}
-            🎉【スペシャル達成！！】受付にこの画面を見せて「特別なスペシャル商品」をゲット！
+                <span class="clear-msg">🔥 【パーフェクト達成！】「特別なスペシャル商品」をプレゼント！</span>
             {% else %}
-            ・蛍イベント（1〜3のどれか1つ）＋ 谷津の日 ＋ 谷津ウォーク 参加<br>
-            <span style="color: #e74c3c; font-weight: bold;">➔ 特別なスペシャル商品をプレゼント！</span>
+                <span style="color: #7f8c8d;">➔ 特別なスペシャル商品をプレゼント！</span>
             {% endif %}
         </div>
     </div>
 
-    <div class="reset-link" onclick="if(confirm('スタンプをすべて消去して最初の状態に戻しますか？')) location.href='{{ url_for('reset') }}'">
-        テスト用：スタンプをリセットする
+    <div class="footer-link">
+        <a href="{{ url_for('reset') }}">テスト用：スタンプをリセットする</a>
     </div>
-</div>
 
 </body>
 </html>
